@@ -13,9 +13,7 @@ type Config struct {
 }
 
 func MostLoad() Config {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("config: load env: %w", err)
-	}
+	godotenv.Load()
 
 	port := os.Getenv("PORT")
 	if port == "" {
