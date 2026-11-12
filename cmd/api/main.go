@@ -4,13 +4,16 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/dineshEth/olx-api/internal/config"
 )
 
 func main() {
+	cfg := config.MostLoad()
 	mux := http.NewServeMux()
-	
+
 	srv := http.Server{
-		Addr:         ":8080",
+		Addr:         ":" + cfg.Port,
 		Handler:      mux,
 		ReadTimeout:  5 * time.Second,
 		IdleTimeout:  10 * time.Second,
@@ -18,6 +21,6 @@ func main() {
 	}
 
 	if err := srv.ListenAndServe(); err != nil {
-		log.Fatalf("server startup fail %w", err)
+		log.Fatalf("server startup fail %v", err)
 	}
 }
