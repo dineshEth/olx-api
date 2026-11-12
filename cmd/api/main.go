@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"github.com/dineshEth/olx-api/internal/config"
+	"github.com/dineshEth/olx-api/internal/db"
 	"github.com/dineshEth/olx-api/internal/handlers"
 )
 
 func main() {
 	cfg := config.MostLoad()
 	mux := http.NewServeMux()
+	db.ConnectDB(cfg.Database_URL)
 
 	mux.HandleFunc("GET /", handlers.HomeHandler)
 	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
