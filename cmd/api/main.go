@@ -13,6 +13,7 @@ func main() {
 	cfg := config.MostLoad()
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("GET /", handlers.HomeHandler)
 	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
 
 	srv := http.Server{
