@@ -6,11 +6,14 @@ import (
 	"time"
 
 	"github.com/dineshEth/olx-api/internal/config"
+	"github.com/dineshEth/olx-api/internal/handlers"
 )
 
 func main() {
 	cfg := config.MostLoad()
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
 
 	srv := http.Server{
 		Addr:         ":" + cfg.Port,
