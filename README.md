@@ -29,6 +29,7 @@ A lightweight, high-performance REST API service built with Go (Golang) for the 
 - **Health Check Endpoint**: Monitor application status and availability
 - **Home Endpoint**: Welcome message and API information
 - **Environment Configuration**: Secure environment variable management
+- **Database Connectivity**: PostgreSQL database integration with connection pooling
 - **Production-Ready**: Configured with proper timeouts for production deployment
 - **Lightweight**: Minimal dependencies for fast startup and low memory footprint
 
@@ -40,6 +41,7 @@ A lightweight, high-performance REST API service built with Go (Golang) for the 
 |----------|------------|---------|
 | **Language** | Go (Golang) | 1.26.7 |
 | **Framework** | Standard Library (net/http) | - |
+| **Database** | PostgreSQL | - |
 | **Dependency Management** | Go Modules | - |
 | **Environment Management** | godotenv | v1.5.1 |
 | **Hosting** | Render | - |
@@ -58,6 +60,8 @@ olx-api/
 ├── internal/
 │   ├── config/
 │   │   └── config.go       # Configuration management
+│   ├── db/
+│   │   └── db.go           # Database connection and management
 │   └── handlers/
 │       ├── healthz.go      # Health check endpoint handler
 │       └── home.go         # Home endpoint handler
@@ -177,6 +181,7 @@ Create or modify the `.env` file in the project root:
 # .env
 PORT=8080
 ENV=development
+DATABASE_URL=postgres://username:password@localhost:5432/dbname?sslmode=disable
 ```
 
 **Environment Variables:**
@@ -185,17 +190,20 @@ ENV=development
 |----------|-------------|----------|---------|
 | `PORT` | The port number the server will listen on | Yes | - |
 | `ENV` | Environment mode (development, staging, production) | Yes | - |
+| `DATABASE_URL` | PostgreSQL connection string | Yes | - |
 
 **For Production:**
 ```bash
 PORT=8080
 ENV=production
+DATABASE_URL=postgres://user:password@host:5432/olx?sslmode=require
 ```
 
 **For Testing:**
 ```bash
 PORT=3000
 ENV=testing
+DATABASE_URL=postgres://user:password@localhost:5432/olx_test?sslmode=disable
 ```
 
 ### Running the Application
@@ -298,12 +306,21 @@ curl https://olx-api-wzl0.onrender.com/
 │  - Loads environment variables       │
 │  - Manages application settings      │
 └─────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────┐
+│            Database                  │
+│          (PostgreSQL)                │
+│  - Connection pooling                │
+│  - Persistent data storage           │
+└─────────────────────────────────────┘
 ```
 
 ### Code Organization
 
-- **cmd/api/main.go**: Main application entry point with server configuration
+- **cmd/api/main.go**: Main application entry point with server configuration and database connection
 - **internal/config/config.go**: Environment configuration and validation
+- **internal/db/db.go**: Database connection management and PostgreSQL integration
 - **internal/handlers/*.go**: HTTP request handlers for all endpoints
 
 ### Design Patterns
@@ -393,6 +410,7 @@ For questions, issues, or support, please contact:
 
 | Version | Date | Description |
 |---------|------|-------------|
+| 0.2.0 | November 2024 | Added PostgreSQL database integration with connection pooling |
 | 0.1.0 | November 2024 | Initial release with health check and home endpoints |
 
 ---
