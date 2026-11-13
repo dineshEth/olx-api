@@ -13,7 +13,10 @@ import (
 func main() {
 	cfg := config.MostLoad()
 	mux := http.NewServeMux()
-	db.ConnectDB(cfg.Database_URL)
+	_, err := db.ConnectDB(cfg.Database_URL)
+	if err != nil {
+		log.Fatalf("database connection fail %v", err)
+	}
 
 	mux.HandleFunc("GET /", handlers.HomeHandler)
 	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)

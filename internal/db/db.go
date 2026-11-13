@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -19,7 +20,11 @@ func ConnectDB(dburl string) (*sql.DB, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	db.PingContext(ctx)
+	if err = db.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("ping database: %v", err)
+	}
+
+	log.Printf("Connected to database: %s", dburl)
 
 	return db, err
 }
