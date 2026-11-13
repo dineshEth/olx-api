@@ -30,6 +30,7 @@ A lightweight, high-performance REST API service built with Go (Golang) for the 
 
 - **Health Check Endpoint**: Monitor application status and availability
 - **Home Endpoint**: Welcome message and API information
+- **Listings Endpoint**: Retrieve classified advertisements from the database
 - **Environment Configuration**: Secure environment variable management
 - **Database Connectivity**: PostgreSQL database integration with connection pooling
 - **Database Migrations**: Version-controlled schema management with up/down migrations
@@ -95,10 +96,13 @@ https://olx-api-wzl0.onrender.com
 
 ### Endpoints
 
+All endpoints return JSON responses.
+
 | Method | Endpoint | Description | Response Format |
 |--------|----------|-------------|-----------------|
 | GET | `/` | Welcome message for the OLX API | JSON |
 | GET | `/healthz` | Health check endpoint to verify API is running | JSON |
+| GET | `/listings` | Retrieve all classified listings from the database | JSON |
 
 ### Detailed API Documentation
 
@@ -147,6 +151,51 @@ GET /healthz
 - Load balancer health checks
 - Container orchestration (Kubernetes, Docker) readiness probes
 - CI/CD pipeline status verification
+
+---
+
+#### 3. Listings Endpoint
+
+**Request:**
+```http
+GET /listings
+```
+
+**Response:**
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Used Car for Sale",
+    "description": "2018 model, excellent condition",
+    "price": "15000.00",
+    "city": "New York",
+    "created_at": "2024-11-13T10:30:00Z"
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440001",
+    "title": "Laptop",
+    "description": "MacBook Pro 2020",
+    "price": "1200.00",
+    "city": "San Francisco",
+    "created_at": "2024-11-12T14:20:00Z"
+  }
+]
+```
+
+**Status Code:** `200 OK`
+
+**Headers:**
+- `Content-Type: application/json`
+
+**Query Parameters:**
+- None currently supported (returns up to 20 most recent listings)
+
+**Features:**
+- Returns all listings from the database
+- Ordered by creation date (newest first)
+- Limited to 20 results for performance
+- Includes full listing details: id, title, description, price, city, and creation timestamp
 
 ---
 
@@ -346,6 +395,9 @@ curl http://localhost:8080/
 
 # Check health status
 curl http://localhost:8080/healthz
+
+# Get all listings
+curl http://localhost:8080/listings
 ```
 
 ### Using Browser
@@ -353,6 +405,7 @@ curl http://localhost:8080/healthz
 Open your browser and navigate to:
 - [http://localhost:8080/](http://localhost:8080/)
 - [http://localhost:8080/healthz](http://localhost:8080/healthz)
+- [http://localhost:8080/listings](http://localhost:8080/listings)
 
 ### Testing with Live Deployment
 
@@ -364,6 +417,9 @@ curl https://olx-api-wzl0.onrender.com/healthz
 
 # Test live home endpoint
 curl https://olx-api-wzl0.onrender.com/
+
+# Get live listings
+curl https://olx-api-wzl0.onrender.com/listings
 ```
 
 ---
@@ -382,10 +438,10 @@ curl https://olx-api-wzl0.onrender.com/
 ┌─────────────────────────────────────┐
 │           HTTP Server                │
 │         (net/http)                   │
-│  ┌─────────────┐  ┌─────────────┐   │
-│  │   /         │  │  /healthz   │   │
-│  │ HomeHandler │  │ HealthzHandler│  │
-│  └─────────────┘  └─────────────┘   │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │
+│  │   /         │  │  /healthz   │  │  /listings  │   │
+│  │ HomeHandler │  │ HealthzHandler│  │ ListingsHandler│  │
+│  └─────────────┘  └─────────────┘  └─────────────┘   │
 └─────────────────────────────────────┘
                     │
                     ▼
@@ -417,11 +473,13 @@ curl https://olx-api-wzl0.onrender.com/
 
 ### Code Organization
 
-- **cmd/api/main.go**: Main application entry point with server configuration and database connection
+- **cmd/api/main.go**: Main application entry point with server configuration, database connection, and handler registration
 - **cmd/migrate/main.go**: Database migration CLI tool using golang-migrate
 - **internal/config/config.go**: Environment configuration and validation (includes DATABASE_URL)
 - **internal/db/db.go**: Database connection management using pgx driver with connection pooling
-- **internal/handlers/*.go**: HTTP request handlers for all endpoints
+- **internal/handlers/home.go**: Home endpoint handler
+- **internal/handlers/healthz.go**: Health check endpoint handler
+- **internal/handlers/listings.go**: Listings endpoint handler with database queries
 - **migrations/*.sql**: Version-controlled database schema migrations (up/down scripts)
 
 ### Design Patterns
@@ -529,6 +587,7 @@ For questions, issues, or support, please contact:
 
 | Version | Date | Description |
 |---------|------|-------------|
+| 0.4.0 | November 2024 | Added /listings endpoint to retrieve classified advertisements from database |
 | 0.3.0 | November 2024 | Added database migrations with golang-migrate, pgx driver, and listings table schema |
 | 0.2.0 | November 2024 | Added PostgreSQL database integration with connection pooling |
 | 0.1.0 | November 2024 | Initial release with health check and home endpoints |
