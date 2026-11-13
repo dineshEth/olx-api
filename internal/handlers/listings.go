@@ -15,7 +15,7 @@ func NewListingHandler(db *sql.DB) *listingHandler {
 	}
 }
 
-func Listings(w http.ResponseWriter, r *http.Request) {
+func (ls *listingHandler) Listings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("ok"))
