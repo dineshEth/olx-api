@@ -4,5 +4,5 @@ CREATE TABLE listings(
     description TEXT NOT NULL,
     price NUMERIC(10, 2) NOT NULL,
     city TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

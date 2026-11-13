@@ -1,1 +1,1 @@
-DROP TABLE IF CREATE TABLE listings;
+DROP TABLE IF EXISTS listings;
