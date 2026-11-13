@@ -33,7 +33,7 @@ func main() {
 		}
 		log.Println("migrate up successfull")
 	case "down":
-		if err := m.Down(); err != nil {
+		if err := m.Steps(-1); err != nil {
 			log.Fatal("migrate down:", err)
 		}
 		log.Println("migrate down successfull")
