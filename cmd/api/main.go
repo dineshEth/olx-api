@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -20,6 +21,7 @@ func main() {
 
 	mux.HandleFunc("GET /", handlers.HomeHandler)
 	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
+	mux.HandleFunc("GET /listings", handlers.Listings)
 
 	srv := http.Server{
 		Addr:         ":" + cfg.Port,
@@ -29,6 +31,7 @@ func main() {
 		WriteTimeout: 5 * time.Second,
 	}
 
+	fmt.Println("server running on :", cfg.Port)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("server startup fail %v", err)
 	}
