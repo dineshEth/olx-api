@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func ConnectDB(dburl string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", dburl)
+	db, err := sql.Open("pgx", dburl)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %v", err)
 	}
