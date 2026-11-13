@@ -19,6 +19,8 @@ A lightweight, high-performance REST API service built with Go (Golang) for the 
   - [Installation](#installation)
   - [Environment Configuration](#environment-configuration)
   - [Running the Application](#running-the-application)
+  - [Running Database Migrations](#running-database-migrations)
+- [Database Schema](#database-schema)
 - [Usage](#usage)
 - [Project Structure](#project-structure)
 
@@ -30,6 +32,7 @@ A lightweight, high-performance REST API service built with Go (Golang) for the 
 - **Home Endpoint**: Welcome message and API information
 - **Environment Configuration**: Secure environment variable management
 - **Database Connectivity**: PostgreSQL database integration with connection pooling
+- **Database Migrations**: Version-controlled schema management with up/down migrations
 - **Production-Ready**: Configured with proper timeouts for production deployment
 - **Lightweight**: Minimal dependencies for fast startup and low memory footprint
 
@@ -42,6 +45,8 @@ A lightweight, high-performance REST API service built with Go (Golang) for the 
 | **Language** | Go (Golang) | 1.26.7 |
 | **Framework** | Standard Library (net/http) | - |
 | **Database** | PostgreSQL | - |
+| **Database Driver** | pgx v5 | v5.13.0 |
+| **Migration Tool** | golang-migrate | v4.20.1 |
 | **Dependency Management** | Go Modules | - |
 | **Environment Management** | godotenv | v1.5.1 |
 | **Hosting** | Render | - |
@@ -55,8 +60,10 @@ olx-api/
 ├── bin/                    # Compiled binary output
 │   └── api                 # Built executable
 ├── cmd/
-│   └── api/
-│       └── main.go         # Application entry point
+│   ├── api/
+│   │   └── main.go         # Application entry point
+│   └── migrate/
+│       └── main.go         # Database migration CLI tool
 ├── internal/
 │   ├── config/
 │   │   └── config.go       # Configuration management
@@ -65,11 +72,14 @@ olx-api/
 │   └── handlers/
 │       ├── healthz.go      # Health check endpoint handler
 │       └── home.go         # Home endpoint handler
+├── migrations/             # Database migration files
+│   ├── 000001_create_listing_table.up.sql   # Create listings table
+│   └── 000001_create_listing_table.down.sql # Drop listings table
 ├── .env                    # Environment variables
 ├── .gitignore              # Git ignore patterns
 ├── go.mod                  # Go module definition
 ├── go.sum                  # Go dependency checksums
-├── makefile                # Build automation
+├── makefile                # Build automation with migration commands
 └── README.md               # Project documentation
 ```
 
@@ -153,6 +163,10 @@ Before you begin, ensure you have the following installed:
 - **Git** (for version control)
   - Download: [https://git-scm.com/downloads](https://git-scm.com/downloads)
 
+- **PostgreSQL** (database server)
+  - Download: [https://www.postgresql.org/download/](https://www.postgresql.org/download/)
+  - Verify: `psql --version`
+
 - **Make** (optional, for build automation)
 
 ### Installation
@@ -173,6 +187,11 @@ Before you begin, ensure you have the following installed:
    go install github.com/joho/godotenv@latest
    ```
 
+4. **Install database migration tool** (required for migrations):
+   ```bash
+   go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+   ```
+
 ### Environment Configuration
 
 Create or modify the `.env` file in the project root:
@@ -181,7 +200,7 @@ Create or modify the `.env` file in the project root:
 # .env
 PORT=8080
 ENV=development
-DATABASE_URL=postgres://username:password@localhost:5432/dbname?sslmode=disable
+DATABASE_URL=postgres://username:password@localhost:5432/olx?sslmode=disable
 ```
 
 **Environment Variables:**
@@ -190,7 +209,7 @@ DATABASE_URL=postgres://username:password@localhost:5432/dbname?sslmode=disable
 |----------|-------------|----------|---------|
 | `PORT` | The port number the server will listen on | Yes | - |
 | `ENV` | Environment mode (development, staging, production) | Yes | - |
-| `DATABASE_URL` | PostgreSQL connection string | Yes | - |
+| `DATABASE_URL` | PostgreSQL connection string (pgx format) | Yes | - |
 
 **For Production:**
 ```bash
@@ -205,6 +224,8 @@ PORT=3000
 ENV=testing
 DATABASE_URL=postgres://user:password@localhost:5432/olx_test?sslmode=disable
 ```
+
+**Note:** The DATABASE_URL must use the pgx connection string format. Example: `postgres://user:password@localhost:5432/database?sslmode=disable`
 
 ### Running the Application
 
@@ -238,10 +259,78 @@ go build -o ./bin/api ./cmd/api/
 go run ./cmd/api/
 ```
 
+### Running Database Migrations
+
+#### Using Makefile
+
+```bash
+# Apply all pending migrations (up)
+make migrate-up
+
+# Rollback the last migration (down)
+make migrate-down
+```
+
+#### Using Migration CLI Directly
+
+```bash
+# Apply all pending migrations
+go run ./cmd/migrate up
+
+# Rollback the last migration
+go run ./cmd/migrate down
+```
+
+**Migration Commands:**
+- `up`: Apply all pending migrations to bring the database schema up to date
+- `down`: Rollback the most recent migration (one step back)
+
+**Important:** Always run migrations before starting the application to ensure the database schema is current.
+
 **Server Output:**
 ```
 Server starting on port 8080...
 ```
+
+---
+
+## Database Schema
+
+The application uses PostgreSQL with the following schema:
+
+### Tables
+
+#### listings
+
+The primary table for storing classified advertisements.
+
+| Column | Type | Description | Constraint |
+|--------|------|-------------|------------|
+| `id` | UUID | Unique identifier | PRIMARY KEY, DEFAULT gen_random_uuid() |
+| `title` | TEXT | Listing title | NOT NULL |
+| `description` | TEXT | Detailed description | NOT NULL |
+| `price` | NUMERIC(10, 2) | Price of the item | NOT NULL |
+| `city` | TEXT | Location city | NOT NULL |
+| `created_at` | TIMESTAMPTZ | Creation timestamp | NOT NULL, DEFAULT NOW() |
+
+**Index:**
+- Primary key on `id` (UUID)
+
+### Creating New Migrations
+
+To add a new migration:
+
+1. Create a new migration file in the `migrations/` directory following the naming convention:
+   - `YYYYMMDD_HHMMSS_description.up.sql` - Migration up script
+   - `YYYYMMDD_HHMMSS_description.down.sql` - Migration down script
+
+2. Write your SQL in the up file to apply changes
+3. Write the reverse SQL in the down file to rollback changes
+
+4. Run the migration:
+   ```bash
+   go run ./cmd/migrate up
+   ```
 
 ---
 
@@ -311,17 +400,29 @@ curl https://olx-api-wzl0.onrender.com/
 ┌─────────────────────────────────────┐
 │            Database                  │
 │          (PostgreSQL)                │
-│  - Connection pooling                │
+│  - Connection pooling (pgx)          │
 │  - Persistent data storage           │
+│  - listings table                    │
+└─────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────┐
+│         Migrations                   │
+│  (golang-migrate/v4)                 │
+│  - Version-controlled schema         │
+│  - Up/Down migration support         │
+│  - File-based migration storage      │
 └─────────────────────────────────────┘
 ```
 
 ### Code Organization
 
 - **cmd/api/main.go**: Main application entry point with server configuration and database connection
-- **internal/config/config.go**: Environment configuration and validation
-- **internal/db/db.go**: Database connection management and PostgreSQL integration
+- **cmd/migrate/main.go**: Database migration CLI tool using golang-migrate
+- **internal/config/config.go**: Environment configuration and validation (includes DATABASE_URL)
+- **internal/db/db.go**: Database connection management using pgx driver with connection pooling
 - **internal/handlers/*.go**: HTTP request handlers for all endpoints
+- **migrations/*.sql**: Version-controlled database schema migrations (up/down scripts)
 
 ### Design Patterns
 
@@ -352,6 +453,24 @@ curl https://olx-api-wzl0.onrender.com/
    ```go
    mux.HandleFunc("GET /new-endpoint", handlers.NewEndpointHandler)
    ```
+
+### Adding New Database Tables
+
+1. Create new migration files in `migrations/`:
+   ```bash
+   # Up migration (create table)
+   migrations/YYYYMMDD_HHMMSS_create_table_name.up.sql
+   
+   # Down migration (drop table)
+   migrations/YYYYMMDD_HHMMSS_create_table_name.down.sql
+   ```
+
+2. Run the migration:
+   ```bash
+   go run ./cmd/migrate up
+   ```
+
+3. Use the table in your application through the database connection
 
 ### Build for Production
 
@@ -410,6 +529,7 @@ For questions, issues, or support, please contact:
 
 | Version | Date | Description |
 |---------|------|-------------|
+| 0.3.0 | November 2024 | Added database migrations with golang-migrate, pgx driver, and listings table schema |
 | 0.2.0 | November 2024 | Added PostgreSQL database integration with connection pooling |
 | 0.1.0 | November 2024 | Initial release with health check and home endpoints |
 
