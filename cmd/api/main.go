@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -13,13 +14,16 @@ import (
 func main() {
 	cfg := config.MostLoad()
 	mux := http.NewServeMux()
-	_, err := db.ConnectDB(cfg.Database_URL)
+	db, err := db.ConnectDB(cfg.Database_URL)
 	if err != nil {
 		log.Fatalf("database connection fail %v", err)
 	}
 
+	ls := handlers.NewListingHandler(db)
+
 	mux.HandleFunc("GET /", handlers.HomeHandler)
 	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
+	mux.HandleFunc("GET /listings", ls.Listings)
 
 	srv := http.Server{
 		Addr:         ":" + cfg.Port,
@@ -29,6 +33,7 @@ func main() {
 		WriteTimeout: 5 * time.Second,
 	}
 
+	fmt.Println("server running on :", cfg.Port)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Fatalf("server startup fail %v", err)
 	}
