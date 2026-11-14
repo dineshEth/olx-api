@@ -26,11 +26,11 @@ func main() {
 		Level:     slog.LevelInfo,
 	})
 	jl := slog.New(jsonLogHandler)
-	ls := handlers.NewListingHandler(db, jl)
+	lh := handlers.NewListingHandler(db, jl)
 
 	mux.HandleFunc("GET /", handlers.HomeHandler)
 	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
-	mux.HandleFunc("GET /listings", ls.Listings)
+	mux.HandleFunc("GET /listings", lh.Listings)
 
 	srv := http.Server{
 		Addr:         ":" + cfg.Port,

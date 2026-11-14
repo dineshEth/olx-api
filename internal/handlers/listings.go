@@ -30,11 +30,11 @@ type listing struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-func (ls *listingHandler) Listings(w http.ResponseWriter, r *http.Request) {
+func (lh *listingHandler) Listings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json")
 
 	ctx := r.Context()
-	rows, err := ls.db.QueryContext(ctx, `SELECT id, title, description, price, city, created_at
+	rows, err := lh.db.QueryContext(ctx, `SELECT id, title, description, price, city, created_at
 				FROM listings
 				ORDER BY created_at DESC
 				LIMIT 100`)
