@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/dineshEth/olx-api/internal/config"
@@ -19,7 +21,12 @@ func main() {
 		log.Fatalf("database connection fail %v", err)
 	}
 
-	ls := handlers.NewListingHandler(db)
+	jsonLogHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: false,
+		Level:     slog.LevelInfo,
+	})
+	jl := slog.New(jsonLogHandler)
+	ls := handlers.NewListingHandler(db, jl)
 
 	mux.HandleFunc("GET /", handlers.HomeHandler)
 	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
