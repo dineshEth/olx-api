@@ -30,11 +30,13 @@ type listing struct {
 func (ls *listingHandler) Listings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "Application/json")
 
-	rows, err := ls.db.Query(`SELECT id, title, description, price, city, created_at
+	ctx := r.Context()
+	rows, err := ls.db.QueryContext(ctx, `SELECT id, title, description, price, city, created_at, pg_sleep(5)
 				FROM listings
 				ORDER BY created_at DESC
-				LIMIT 20`)
+				LIMIT 100`)
 	if err != nil {
+		log.Printf("query listings: %v", err)
 		http.Error(w, "internal_error", http.StatusInternalServerError)
 		return
 	}
