@@ -11,11 +11,11 @@ import (
 	"github.com/dineshEth/olx-api/internal/config"
 	"github.com/dineshEth/olx-api/internal/db"
 	"github.com/dineshEth/olx-api/internal/handlers"
+	"github.com/dineshEth/olx-api/internal/middlewares"
 )
 
 func main() {
 	cfg := config.MostLoad()
-	mux := http.NewServeMux()
 	db, err := db.ConnectDB(cfg.Database_URL)
 	if err != nil {
 		log.Fatalf("database connection fail %v", err)
@@ -28,13 +28,15 @@ func main() {
 	jl := slog.New(jsonLogHandler)
 	lh := handlers.NewListingHandler(db, jl)
 
+	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", handlers.HomeHandler)
 	mux.HandleFunc("GET /healthz", handlers.HealthzHandler)
 	mux.HandleFunc("GET /listings", lh.Listings)
+	handler := middlewares.RequestID(mux)
 
 	srv := http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      mux,
+		Handler:      handler,
 		ReadTimeout:  5 * time.Second,
 		IdleTimeout:  10 * time.Second,
 		WriteTimeout: 5 * time.Second,
